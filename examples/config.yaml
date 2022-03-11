@@ -1,2 +1,2 @@
 fronius:
-  hostname: fronius.local
+  baseUrl: http://fronius.local

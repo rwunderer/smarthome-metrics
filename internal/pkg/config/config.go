@@ -9,7 +9,7 @@ import (
 )
 
 type Fronius struct {
-	Hostname       string `yaml:"hostname"`
+	BaseUrl        string `yaml:"baseUrl"`
 	MeterOffsetIn  int    `yaml:"meterOffsetIn"`
 	MeterOffsetOut int    `yaml:"meterOffsetOut"`
 }
@@ -34,8 +34,8 @@ func (conf *Config) ReadFile(inFile string) error {
 func (conf *Config) Validate() error {
 	var errs []string
 
-	if conf.Fronius.Hostname == "" {
-		errs = append(errs, "Fronius Hostname not specified! Please set fronius.hostname in config file!")
+	if conf.Fronius.BaseUrl == "" {
+		errs = append(errs, "Fronius BaseUrl not specified! Please set fronius.baseUrl in config file!")
 	}
 
 	if len(errs) > 0 {
