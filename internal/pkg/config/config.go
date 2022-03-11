@@ -9,13 +9,13 @@ import (
 )
 
 type Fronius struct {
-	Hostname				string `yaml:"hostname"`
-	MeterOffsetIn		int `yaml:"meterOffsetIn"`
-	MeterOffsetOut	int `yaml:"meterOffsetOut"`
+	Hostname       string `yaml:"hostname"`
+	MeterOffsetIn  int    `yaml:"meterOffsetIn"`
+	MeterOffsetOut int    `yaml:"meterOffsetOut"`
 }
 
 type Config struct {
-	Fronius		Fronius `yaml:"fronius"`
+	Fronius Fronius `yaml:"fronius"`
 }
 
 func (conf *Config) ReadFile(inFile string) error {
