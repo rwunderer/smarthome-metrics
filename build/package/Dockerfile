@@ -25,7 +25,7 @@ COPY examples/config.yaml /conf
 #--------
 # container
 #--------
-FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/static
+FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/static:nonroot
 
 ENV CONFIG_FILE=/conf/config.yaml
 
@@ -33,7 +33,7 @@ COPY --from=builder /conf /conf
 
 WORKDIR /app
 
-USER 10000
+USER 1002:1002
 
 COPY --from=builder /app/smarthome-metrics /app/smarthome-metrics
 
