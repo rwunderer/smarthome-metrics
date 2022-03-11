@@ -47,8 +47,8 @@ func (controller *FroniusController) getMeterData(ctx context.Context) error {
 	log.WithFields(log.Fields{
 		"consumed":  int(d.Body.Data.Consumed),
 		"produced":  int(d.Body.Data.Produced),
-		"meterIn": int(meterIn),
-		"meterOut": int(meterOut),
+		"meterIn":   int(meterIn),
+		"meterOut":  int(meterOut),
 		"timestamp": d.Head.Timestamp,
 	}).Debug("Successfully parsed Meter data")
 

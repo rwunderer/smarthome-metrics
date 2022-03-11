@@ -12,9 +12,11 @@ import (
 )
 
 type FroniusController struct {
-	Config   *config.Fronius
-	meterUrl string
-	flowUrl  string
+	Config        *config.Fronius
+	meterUrl      string
+	flowUrl       string
+	batteryUrl    string
+	batteryAddUrl string
 }
 
 // NewController creates a new Controller
@@ -26,11 +28,15 @@ func NewController(config *config.Fronius) (*FroniusController, error) {
 
 	meterUrl := fmt.Sprintf("%s/solar_api/v1/GetMeterRealtimeData.cgi?Scope=Device&DeviceId=0", config.BaseUrl)
 	flowUrl := fmt.Sprintf("%s/solar_api/v1/GetPowerFlowRealtimeData.fcgi?Scope=Device&DeviceId=0", config.BaseUrl)
+	batteryUrl := fmt.Sprintf("%s/solar_api/v1/GetStorageRealtimeData.cgi?Scope=Device&DeviceId=0", config.BaseUrl)
+	batteryAddUrl := fmt.Sprintf("%s/components/BatteryManagementSystem/readable", config.BaseUrl)
 
 	return &FroniusController{
-		Config:   config,
-		meterUrl: meterUrl,
-		flowUrl:  flowUrl,
+		Config:        config,
+		meterUrl:      meterUrl,
+		batteryAddUrl: batteryAddUrl,
+		flowUrl:       flowUrl,
+		batteryUrl:    batteryUrl,
 	}, nil
 }
 
@@ -75,6 +81,10 @@ func (controller *FroniusController) getMetrics(ctx context.Context) error {
 	}
 
 	if err := controller.getPowerFlow(ctx); err != nil {
+		return err
+	}
+
+	if err := controller.getBatteryData(ctx); err != nil {
 		return err
 	}
 
