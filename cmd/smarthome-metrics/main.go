@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/config"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/fronius"
 )
 
@@ -77,15 +78,28 @@ func main() {
 	flag.Parse()
 	log.Infof("Fronius base url is %v", config.Fronius.BaseUrl)
 
-	// run actual controller
+	// create fronius controller
 	fronius, err := fronius.NewController(&config.Fronius)
 	if err != nil {
 		log.Errorf("could not initialize fronius controller: %v", err)
 		os.Exit(1)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	// run main loop
 
-	fronius.Run(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	defer cancel()
+	metricsCh := make(chan metric.Metric)
+
+	go fronius.Run(ctx, metricsCh)
+
+	for {
+		select {
+		case metrics := <-metricsCh:
+			for k, v := range metrics {
+				log.Infof("metric %v = %v", k, v)
+			}
+		}
+	}
 }

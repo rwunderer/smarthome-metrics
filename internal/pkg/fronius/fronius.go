@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/config"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 )
 
 type FroniusController struct {
@@ -56,10 +57,14 @@ func validateConfig(conf *config.Fronius) error {
 }
 
 // Main run loop
-func (controller *FroniusController) Run(ctx context.Context) error {
-	if err := controller.getMetrics(ctx); err != nil {
+func (controller *FroniusController) Run(ctx context.Context, metricsCh chan metric.Metric) error {
+	var metrics metric.Metric
+	var err error
+
+	if metrics, err = controller.getMetrics(ctx); err != nil {
 		return err
 	}
+	metricsCh <- metrics
 
 	for {
 		select {
@@ -67,26 +72,29 @@ func (controller *FroniusController) Run(ctx context.Context) error {
 			log.Debugf("Context Done. Shutting down")
 			return nil
 		case <-time.After(30 * time.Second):
-			if err := controller.getMetrics(ctx); err != nil {
+			if metrics, err = controller.getMetrics(ctx); err != nil {
 				return err
 			}
+			metricsCh <- metrics
 		}
 	}
 }
 
 // Retrieve all configured metrics
-func (controller *FroniusController) getMetrics(ctx context.Context) error {
-	if err := controller.getMeterData(ctx); err != nil {
-		return err
+func (controller *FroniusController) getMetrics(ctx context.Context) (metric.Metric, error) {
+	metrics := metric.NewMetric()
+
+	if err := controller.getMeterData(ctx, metrics); err != nil {
+		return metrics, err
 	}
 
-	if err := controller.getPowerFlow(ctx); err != nil {
-		return err
+	if err := controller.getPowerFlow(ctx, metrics); err != nil {
+		return metrics, err
 	}
 
-	if err := controller.getBatteryData(ctx); err != nil {
-		return err
+	if err := controller.getBatteryData(ctx, metrics); err != nil {
+		return metrics, err
 	}
 
-	return nil
+	return metrics, nil
 }

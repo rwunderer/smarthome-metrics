@@ -1,6 +1,7 @@
 package fronius
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -9,23 +10,22 @@ import (
 )
 
 // Retrieve Fronius data
-func (controller *FroniusController) retrieveHttpData(url string) ([]byte, error) {
-	spaceClient := http.Client{
-		Timeout: time.Second * 2,
-	}
+func (controller *FroniusController) retrieveHttpData(ctx context.Context, url string) ([]byte, error) {
+	reqCtx, cancel := context.WithTimeout(ctx, time.Second * 2)
+	defer cancel()
 
 	log.WithFields(log.Fields{
 		"url": url,
 	}).Debug("Retrieving Fronius Meter data")
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, url, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	req.Header.Set("User-Agent", "smarthome-metrics")
 
-	res, err := spaceClient.Do(req)
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Errorf("Error retrieving Fronius Meter data: %v", err)
 		return nil, err

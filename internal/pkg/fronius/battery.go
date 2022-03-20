@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 )
 
 type FroniusBatteryController struct {
@@ -42,14 +44,14 @@ type FroniusBatteryDoc struct {
 }
 
 // Retrieve Fronius Battery data
-func (controller *FroniusController) getBatteryData(ctx context.Context) error {
-	err := controller.getBatteryBaseData(ctx)
+func (controller *FroniusController) getBatteryData(ctx context.Context, metrics metric.Metric) error {
+	err := controller.getBatteryBaseData(ctx, metrics)
 	if err != nil {
 		log.Errorf("Error retrieving Fronius Battery base data: %v", err)
 		return nil
 	}
 
-	err = controller.getBatteryAdditionalData(ctx)
+	err = controller.getBatteryAdditionalData(ctx, metrics)
 	if err != nil {
 		log.Errorf("Error retrieving Fronius Battery additional data: %v", err)
 		return nil
@@ -58,8 +60,8 @@ func (controller *FroniusController) getBatteryData(ctx context.Context) error {
 	return nil
 }
 
-func (controller *FroniusController) getBatteryBaseData(ctx context.Context) error {
-	body, err := controller.retrieveHttpData(controller.batteryUrl)
+func (controller *FroniusController) getBatteryBaseData(ctx context.Context, metrics metric.Metric) error {
+	body, err := controller.retrieveHttpData(ctx, controller.batteryUrl)
 	if err != nil {
 		log.Errorf("Error retrieving Fronius Battery data: %v", err)
 		return nil
@@ -81,11 +83,16 @@ func (controller *FroniusController) getBatteryBaseData(ctx context.Context) err
 		"timestamp":   d.Head.Timestamp,
 	}).Debug("Successfully parsed Battery data")
 
+	metrics["battery.max"] = d.Body.Data.Controller.CapacityMaximum
+	metrics["battery.remaining"] = d.Body.Data.Controller.CapacityMaximum * d.Body.Data.Controller.ChargeRelative / 100
+	metrics["battery.charge_pct"] = d.Body.Data.Controller.ChargeRelative
+	metrics["battery.temperature"] = d.Body.Data.Controller.CellTemperature
+
 	return nil
 }
 
-func (controller *FroniusController) getBatteryAdditionalData(ctx context.Context) error {
-	body, err := controller.retrieveHttpData(controller.batteryAddUrl)
+func (controller *FroniusController) getBatteryAdditionalData(ctx context.Context, metrics metric.Metric) error {
+	body, err := controller.retrieveHttpData(ctx, controller.batteryAddUrl)
 	if err != nil {
 		log.Errorf("Error retrieving Fronius Battery additional data: %v", err)
 		return nil
@@ -105,6 +112,9 @@ func (controller *FroniusController) getBatteryAdditionalData(ctx context.Contex
 		"discharged":    d.Body.Data.Battery.Channels.LifetimeDischarged,
 		"timestamp":     d.Head.Timestamp,
 	}).Debug("Successfully parsed Battery data")
+
+  metrics["battery.total_charged"]    = d.Body.Data.Battery.Channels.LifetimeCharged
+  metrics["battery.total_discharged"] = d.Body.Data.Battery.Channels.LifetimeDischarged
 
 	return nil
 }

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 )
 
 type FroniusPowerFlowSite struct {
@@ -34,8 +36,8 @@ type FroniusPowerFlowDoc struct {
 }
 
 // Retrieve Fronius PowerFlow data
-func (controller *FroniusController) getPowerFlow(ctx context.Context) error {
-	body, err := controller.retrieveHttpData(controller.flowUrl)
+func (controller *FroniusController) getPowerFlow(ctx context.Context, metrics metric.Metric) error {
+	body, err := controller.retrieveHttpData(ctx, controller.flowUrl)
 	if err != nil {
 		log.Errorf("Error retrieving Fronius PowerFlow data: %v", err)
 		return nil
@@ -58,6 +60,13 @@ func (controller *FroniusController) getPowerFlow(ctx context.Context) error {
 		"selfconsumption": d.Body.Data.Site.RelSelfConsumption,
 		"timestamp":       d.Head.Timestamp,
 	}).Debug("Successfully parsed PowerFlow data")
+
+	metrics["inverter.p_akku"] = d.Body.Data.Site.PAkku
+	metrics["inverter.p_grid"] = d.Body.Data.Site.PGrid
+	metrics["inverter.p_load"] = d.Body.Data.Site.PLoad
+	metrics["inverter.p_pv"] = d.Body.Data.Site.PPV
+	metrics["inverter.rel_autonomy"] = d.Body.Data.Site.RelAutonomy
+	metrics["inverter.rel_selfconsumption"] = d.Body.Data.Site.RelSelfConsumption
 
 	return nil
 }

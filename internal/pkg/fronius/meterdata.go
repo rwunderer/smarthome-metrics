@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 )
 
 type FroniusMeterData struct {
@@ -26,8 +28,8 @@ type FroniusMeterDoc struct {
 }
 
 // Retrieve Fronius Meter data
-func (controller *FroniusController) getMeterData(ctx context.Context) error {
-	body, err := controller.retrieveHttpData(controller.meterUrl)
+func (controller *FroniusController) getMeterData(ctx context.Context, metrics metric.Metric) error {
+	body, err := controller.retrieveHttpData(ctx, controller.meterUrl)
 	if err != nil {
 		log.Errorf("Error retrieving Fronius Meter data: %v", err)
 		return nil
@@ -51,6 +53,11 @@ func (controller *FroniusController) getMeterData(ctx context.Context) error {
 		"meterOut":  int(meterOut),
 		"timestamp": d.Head.Timestamp,
 	}).Debug("Successfully parsed Meter data")
+
+	metrics["inverter.consumed"] = d.Body.Data.Consumed
+	metrics["inverter.produced"] = d.Body.Data.Produced
+	metrics["calculated.in"] = meterIn
+	metrics["calculated.out"] = meterOut
 
 	return nil
 }
