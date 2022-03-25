@@ -57,14 +57,12 @@ func validateConfig(conf *config.Fronius) error {
 }
 
 // Main run loop
-func (controller *FroniusController) Run(ctx context.Context, metricsCh chan metric.Metric) error {
-	var metrics metric.Metric
+func (controller *FroniusController) Run(ctx context.Context, metrics *metric.Metrics) error {
 	var err error
 
-	if metrics, err = controller.getMetrics(ctx); err != nil {
+	if err = controller.getMetrics(ctx, metrics); err != nil {
 		return err
 	}
-	metricsCh <- metrics
 
 	for {
 		select {
@@ -72,29 +70,27 @@ func (controller *FroniusController) Run(ctx context.Context, metricsCh chan met
 			log.Debugf("Context Done. Shutting down")
 			return nil
 		case <-time.After(30 * time.Second):
-			if metrics, err = controller.getMetrics(ctx); err != nil {
+			if err = controller.getMetrics(ctx, metrics); err != nil {
 				return err
 			}
-			metricsCh <- metrics
 		}
 	}
 }
 
 // Retrieve all configured metrics
-func (controller *FroniusController) getMetrics(ctx context.Context) (metric.Metric, error) {
-	metrics := metric.NewMetric()
+func (controller *FroniusController) getMetrics(ctx context.Context, metrics *metric.Metrics) error {
 
 	if err := controller.getMeterData(ctx, metrics); err != nil {
-		return metrics, err
+		return err
 	}
 
 	if err := controller.getPowerFlow(ctx, metrics); err != nil {
-		return metrics, err
+		return err
 	}
 
 	if err := controller.getBatteryData(ctx, metrics); err != nil {
-		return metrics, err
+		return err
 	}
 
-	return metrics, nil
+	return nil
 }

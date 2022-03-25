@@ -28,7 +28,7 @@ type FroniusMeterDoc struct {
 }
 
 // Retrieve Fronius Meter data
-func (controller *FroniusController) getMeterData(ctx context.Context, metrics metric.Metric) error {
+func (controller *FroniusController) getMeterData(ctx context.Context, metrics *metric.Metrics) error {
 	body, err := controller.retrieveHttpData(ctx, controller.meterUrl)
 	if err != nil {
 		log.Errorf("Error retrieving Fronius Meter data: %v", err)
@@ -54,10 +54,10 @@ func (controller *FroniusController) getMeterData(ctx context.Context, metrics m
 		"timestamp": d.Head.Timestamp,
 	}).Debug("Successfully parsed Meter data")
 
-	metrics["inverter.consumed"] = d.Body.Data.Consumed
-	metrics["inverter.produced"] = d.Body.Data.Produced
-	metrics["calculated.in"] = meterIn
-	metrics["calculated.out"] = meterOut
+	metrics.Set("inverter.consumed", d.Body.Data.Consumed)
+	metrics.Set("inverter.produced", d.Body.Data.Produced)
+	metrics.Set("calculated.in", meterIn)
+	metrics.Set("calculated.out", meterOut)
 
 	return nil
 }

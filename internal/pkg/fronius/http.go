@@ -11,7 +11,7 @@ import (
 
 // Retrieve Fronius data
 func (controller *FroniusController) retrieveHttpData(ctx context.Context, url string) ([]byte, error) {
-	reqCtx, cancel := context.WithTimeout(ctx, time.Second * 2)
+	reqCtx, cancel := context.WithTimeout(ctx, time.Second*2)
 	defer cancel()
 
 	log.WithFields(log.Fields{

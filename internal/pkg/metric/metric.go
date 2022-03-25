@@ -6,8 +6,8 @@ import (
 )
 
 type Metric struct {
-	value float64
-	time  time.Time
+	Value float64
+	Time  time.Time
 }
 
 type Metrics struct {
@@ -15,24 +15,33 @@ type Metrics struct {
 	lock    sync.RWMutex
 }
 
-func NewMetrics() Metrics {
-	return make(Metrics)
+func NewMetrics() *Metrics {
+	m := new(Metrics)
+	m.metrics = make(map[string]Metric)
+
+	return m
 }
 
-func (Metrics *m) Set(key string, value float64) {
+func (m *Metrics) Set(key string, value float64) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
 	m.metrics[key] = Metric{
-		value: value,
-		time:  time.Now(),
+		Value: value,
+		Time:  time.Now(),
 	}
 }
 
-func (Metrics *m) Get(key string) Metric {
+func (m *Metrics) Get(key string) Metric {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
 	rv := m.metrics[key]
 	return rv
+}
+
+func (m *Metrics) Iterate(f func(string, Metric)) {
+	for k, v := range m.metrics {
+		f(k, v)
+	}
 }

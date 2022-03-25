@@ -22,6 +22,10 @@ test:
 build:
 	go build ./cmd/$(APP)
 
+.PHONY: fmt
+fmt:
+	@find . -name "*.go" -exec go fmt {} \;
+
 .PHONY: run
 run:
 	go run ./cmd/$(APP)/main.go

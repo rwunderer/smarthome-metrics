@@ -4,13 +4,14 @@ import (
 	"context"
 	"flag"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/config"
-	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/fronius"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 )
 
 func init() {
@@ -88,18 +89,19 @@ func main() {
 	// run main loop
 
 	ctx, cancel := context.WithCancel(context.Background())
-
 	defer cancel()
-	metricsCh := make(chan metric.Metric)
 
-	go fronius.Run(ctx, metricsCh)
+	metrics := make(map[string]*metric.Metrics)
+	metrics["fronius"] = metric.NewMetrics()
+
+	go fronius.Run(ctx, metrics["fronius"])
 
 	for {
 		select {
-		case metrics := <-metricsCh:
-			for k, v := range metrics {
-				log.Infof("metric %v = %v", k, v)
-			}
+		case <-time.After(3 * time.Second):
+			metrics["fronius"].Iterate(func(k string, v metric.Metric) {
+				log.Infof("metric %v = %v @ %v", k, v.Value, v.Time.Unix())
+			})
 		}
 	}
 }

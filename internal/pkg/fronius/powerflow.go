@@ -36,7 +36,7 @@ type FroniusPowerFlowDoc struct {
 }
 
 // Retrieve Fronius PowerFlow data
-func (controller *FroniusController) getPowerFlow(ctx context.Context, metrics metric.Metric) error {
+func (controller *FroniusController) getPowerFlow(ctx context.Context, metrics *metric.Metrics) error {
 	body, err := controller.retrieveHttpData(ctx, controller.flowUrl)
 	if err != nil {
 		log.Errorf("Error retrieving Fronius PowerFlow data: %v", err)
@@ -61,12 +61,12 @@ func (controller *FroniusController) getPowerFlow(ctx context.Context, metrics m
 		"timestamp":       d.Head.Timestamp,
 	}).Debug("Successfully parsed PowerFlow data")
 
-	metrics["inverter.p_akku"] = d.Body.Data.Site.PAkku
-	metrics["inverter.p_grid"] = d.Body.Data.Site.PGrid
-	metrics["inverter.p_load"] = d.Body.Data.Site.PLoad
-	metrics["inverter.p_pv"] = d.Body.Data.Site.PPV
-	metrics["inverter.rel_autonomy"] = d.Body.Data.Site.RelAutonomy
-	metrics["inverter.rel_selfconsumption"] = d.Body.Data.Site.RelSelfConsumption
+	metrics.Set("inverter.p_akku", d.Body.Data.Site.PAkku)
+	metrics.Set("inverter.p_grid", d.Body.Data.Site.PGrid)
+	metrics.Set("inverter.p_load", d.Body.Data.Site.PLoad)
+	metrics.Set("inverter.p_pv", d.Body.Data.Site.PPV)
+	metrics.Set("inverter.rel_autonomy", d.Body.Data.Site.RelAutonomy)
+	metrics.Set("inverter.rel_selfconsumption", d.Body.Data.Site.RelSelfConsumption)
 
 	return nil
 }
