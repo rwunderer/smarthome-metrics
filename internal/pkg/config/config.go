@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
-	"strings"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -14,8 +13,15 @@ type Fronius struct {
 	MeterOffsetOut int    `yaml:"meterOffsetOut"`
 }
 
+type Ecotouch struct {
+	BaseUrl        string `yaml:"baseUrl"`
+	Username        string `yaml:"username"`
+	Password        string `yaml:"password"`
+}
+
 type Config struct {
 	Fronius Fronius `yaml:"fronius"`
+	Ecotouch Ecotouch `yaml:"ecotouch"`
 }
 
 func (conf *Config) ReadFile(inFile string) error {
@@ -26,20 +32,6 @@ func (conf *Config) ReadFile(inFile string) error {
 
 	if err := yaml.Unmarshal(content, &conf); err != nil {
 		return fmt.Errorf("failed to unmarshal config file: %v", err)
-	}
-
-	return nil
-}
-
-func (conf *Config) Validate() error {
-	var errs []string
-
-	if conf.Fronius.BaseUrl == "" {
-		errs = append(errs, "Fronius BaseUrl not specified! Please set fronius.baseUrl in config file!")
-	}
-
-	if len(errs) > 0 {
-		return fmt.Errorf("%s", strings.Join(errs, ", "))
 	}
 
 	return nil

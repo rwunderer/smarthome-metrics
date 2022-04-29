@@ -10,8 +10,9 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/config"
-	"github.com/rwunderer/smarthome-metrics/internal/pkg/fronius"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
+	// "github.com/rwunderer/smarthome-metrics/internal/pkg/fronius"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/ecotouch"
 )
 
 func init() {
@@ -80,9 +81,16 @@ func main() {
 	log.Infof("Fronius base url is %v", config.Fronius.BaseUrl)
 
 	// create fronius controller
-	fronius, err := fronius.NewController(&config.Fronius)
+	/*fronius, err := fronius.NewController(&config.Fronius)
 	if err != nil {
 		log.Errorf("could not initialize fronius controller: %v", err)
+		os.Exit(1)
+	}*/
+
+	// create ecotouch controller
+	ecotouch, err := ecotouch.NewController(&config.Ecotouch)
+	if err != nil {
+		log.Errorf("could not initialize ecotouch controller: %v", err)
 		os.Exit(1)
 	}
 
@@ -93,15 +101,19 @@ func main() {
 
 	metrics := make(map[string]*metric.Metrics)
 	metrics["fronius"] = metric.NewMetrics()
+	metrics["ecotouch"] = metric.NewMetrics()
 
-	go fronius.Run(ctx, metrics["fronius"])
+	// go fronius.Run(ctx, metrics["fronius"])
+	go ecotouch.Run(ctx, metrics["ecotouch"])
 
 	for {
 		select {
 		case <-time.After(3 * time.Second):
-			metrics["fronius"].Iterate(func(k string, v metric.Metric) {
-				log.Infof("metric %v = %v @ %v", k, v.Value, v.Time.Unix())
-			})
+			for _, m := range metrics {
+				m.Iterate(func(k string, v metric.Metric) {
+					log.Infof("metric %v = %v @ %v", k, v.Value, v.Time.Unix())
+				})
+			}
 		}
 	}
 }

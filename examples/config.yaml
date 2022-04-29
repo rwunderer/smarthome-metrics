@@ -1,2 +1,5 @@
 fronius:
   baseUrl: http://fronius.local
+
+ecotouch:
+  baseUrl: http://ecotouch.local
