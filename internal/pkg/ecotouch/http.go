@@ -13,7 +13,7 @@ import (
 
 // Retrieve Ecotouch data
 func (controller *EcotouchController) retrieveHttpData(ctx context.Context, url string) ([]byte, error) {
-	reqCtx, cancel := context.WithTimeout(ctx, time.Second*2)
+	reqCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	log.WithFields(log.Fields{
@@ -54,7 +54,7 @@ func (controller *EcotouchController) retrieveHttpData(ctx context.Context, url 
 
 // Login to Ecotouch
 func (controller *EcotouchController) login(ctx context.Context, url string) error {
-	reqCtx, cancel := context.WithTimeout(ctx, time.Second*2)
+	reqCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, url, nil)

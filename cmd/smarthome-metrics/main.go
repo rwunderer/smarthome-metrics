@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"os"
+	"os/signal"
+  "syscall"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -54,6 +56,10 @@ func init() {
 	}
 }
 
+func cleanUp() {
+	log.Infof("Clean up")
+}
+
 func main() {
 	var configFile string
 
@@ -95,8 +101,11 @@ func main() {
 	}
 
 	// run main loop
+	s := make(chan os.Signal, 1)
+	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cleanUp()
 	defer cancel()
 
 	metrics := make(map[string]*metric.Metrics)
@@ -106,6 +115,7 @@ func main() {
 	// go fronius.Run(ctx, metrics["fronius"])
 	go ecotouch.Run(ctx, metrics["ecotouch"])
 
+  Loop:
 	for {
 		select {
 		case <-time.After(3 * time.Second):
@@ -114,6 +124,10 @@ func main() {
 					log.Infof("metric %v = %v @ %v", k, v.Value, v.Time.Unix())
 				})
 			}
+		case <-s:
+			ecotouch.Close(ctx)
+			cancel()
+			break Loop
 		}
 	}
 }

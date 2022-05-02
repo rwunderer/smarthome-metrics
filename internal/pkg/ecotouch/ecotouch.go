@@ -15,32 +15,14 @@ import (
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 )
 
-type tagDescription struct {
-	name	  string
-	module	string
-	fact    float64
-	usage		int
-}
-
-var tags = map[string]tagDescription {
-	"A1": {
-		name:   "temp",
-		module: "outside",
-		fact:   0.1,
-    usage:  1,
-  },
-	"A2": {
-		name:   "temp_1h",
-		module: "outside",
-		fact:   0.1,
-    usage:  2,
-	},
-	"A3": {
-		name:   "temp_24h",
-		module: "outside",
-		fact:   0.1,
-    usage:  2,
-	},
+var modules = map[string]struct{} {
+	"main": {},
+	"geo": {},
+	"water": {},
+	"heating": {},
+	"cooling": {},
+	"comp1": {},
+	"comp2": {},
 }
 
 type EcotouchController struct {
@@ -62,12 +44,14 @@ func NewController(config *config.Ecotouch) (*EcotouchController, error) {
 	logoutUrl := fmt.Sprintf("%s/cgi/logout", config.BaseUrl)
 
 	var tagPar string
-	i := 0
-	for t := range tags {
-		i += 1
-		tagPar += fmt.Sprintf("&t%v=%v", i, t)
+	tagCount := 0
+	for t, v := range tags {
+		if _, ok := modules[v.module]; ok {
+			tagCount += 1
+			tagPar += fmt.Sprintf("&t%v=%v", tagCount, t)
+		}
 	}
-	readUrl := fmt.Sprintf("%s/cgi/readTags?n=%v%v", config.BaseUrl, len(tags), tagPar)
+	readUrl := fmt.Sprintf("%s/cgi/readTags?n=%v%v", config.BaseUrl, tagCount, tagPar)
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -102,11 +86,21 @@ func validateConfig(conf *config.Ecotouch) error {
 	return nil
 }
 
+// Log out of ecotouch
+func (controller *EcotouchController) Close(ctx context.Context) {
+	if err := controller.login(ctx, controller.logoutUrl); err != nil {
+		log.Errorf("Error logging out of Ecotouch: %v", err)
+	} else {
+		log.Infof("Successfully logged out of Ecotouch")
+	}
+}
+
 // Main run loop
 func (controller *EcotouchController) Run(ctx context.Context, metrics *metric.Metrics) error {
 	var err error
 
 	if err = controller.getMetrics(ctx, metrics); err != nil {
+		controller.Close(ctx)
 		return err
 	}
 
@@ -122,15 +116,6 @@ func (controller *EcotouchController) Run(ctx context.Context, metrics *metric.M
 				return err
 			}
 		}
-	}
-}
-
-// Log out of ecotouch
-func (controller *EcotouchController) Close(ctx context.Context) {
-	if err := controller.login(ctx, controller.logoutUrl); err != nil {
-		log.Errorf("Error logging out of Ecotouch: %v", err)
-	} else {
-		log.Infof("Successfully logged out of Ecotouch")
 	}
 }
 
@@ -163,13 +148,42 @@ func (controller *EcotouchController) getMetrics(ctx context.Context, metrics *m
 		}
 	}
 
+	var day, month, year, hour, minute int
 	for _, v := range strings.Split(string(body), "#") {
 		m := strings.Fields(v)
 		if len(m) >= 4 {
 			if val, err := strconv.ParseFloat(m[3], 64); err == nil {
-				log.Infof("metric: %v = %v", m[0], val * tags[m[0]].fact)
+				tag := tags[m[0]]
+
+				// Deal with special tags
+				switch m[0] {
+				case "I51":
+					for _, w := range stateWord {
+						metrics.Set(fmt.Sprintf("%s.%s", w.module, w.name), float64(int(val) & w.flag))
+					}
+				case "I5":
+					day = int(val)
+				case "I6":
+					month = int(val)
+				case "I7":
+					year = 2000 + int(val)
+				case "I8":
+					hour = int(val)
+				case "I9":
+					minute = int(val)
+				default:
+					metrics.Set(fmt.Sprintf("%s.%s", tag.module, tag.name), val * tag.fact)
+				}
 			}
 		}
+	}
+
+	if zone, err := time.LoadLocation("Europe/Vienna"); err == nil {
+		t := time.Date(year, time.Month(month), day, hour, minute, 0, 0, zone)
+		metrics.Set("main.datetime", float64(t.Unix()))
+		metrics.Set("main.time", float64(hour * 3600 + minute * 60))
+		metrics.Set("main.timediff", time.Since(t).Seconds())
+		log.Debugf("datetime=%v", t.UTC())
 	}
 
 	return nil
