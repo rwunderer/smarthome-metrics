@@ -56,6 +56,10 @@ func validateConfig(conf *config.Fronius) error {
 	return nil
 }
 
+// Empty function to satisfy interface
+func (controller *FroniusController) Close(ctx context.Context) {
+}
+
 // Main run loop
 func (controller *FroniusController) Run(ctx context.Context, metrics *metric.Metrics) error {
 	var err error

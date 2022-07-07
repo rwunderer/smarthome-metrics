@@ -13,7 +13,7 @@ import (
 
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/config"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
-	// "github.com/rwunderer/smarthome-metrics/internal/pkg/fronius"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/fronius"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/ecotouch"
 )
 
@@ -60,8 +60,14 @@ func cleanUp() {
 	log.Infof("Clean up")
 }
 
+type SmarthomeController interface {
+	Run(ctx context.Context, metrics *metric.Metrics) error
+	Close(ctx context.Context)
+}
+
 func main() {
 	var configFile string
+	activeControllers := []string{"fronius", "ecotouch"}
 
 	// define config file
 	configFile, ok := os.LookupEnv("CONFIG_FILE")
@@ -86,19 +92,10 @@ func main() {
 	flag.Parse()
 	log.Infof("Fronius base url is %v", config.Fronius.BaseUrl)
 
-	// create fronius controller
-	/*fronius, err := fronius.NewController(&config.Fronius)
-	if err != nil {
-		log.Errorf("could not initialize fronius controller: %v", err)
-		os.Exit(1)
-	}*/
-
-	// create ecotouch controller
-	ecotouch, err := ecotouch.NewController(&config.Ecotouch)
-	if err != nil {
-		log.Errorf("could not initialize ecotouch controller: %v", err)
-		os.Exit(1)
-	}
+	// create controllers
+	controllers := make(map[string]SmarthomeController)
+	controllers["fronius"], _ = fronius.NewController(&config.Fronius)
+	controllers["ecotouch"], _ = ecotouch.NewController(&config.Ecotouch)
 
 	// run main loop
 	s := make(chan os.Signal, 1)
@@ -112,8 +109,9 @@ func main() {
 	metrics["fronius"] = metric.NewMetrics()
 	metrics["ecotouch"] = metric.NewMetrics()
 
-	// go fronius.Run(ctx, metrics["fronius"])
-	go ecotouch.Run(ctx, metrics["ecotouch"])
+	for _, c := range activeControllers {
+		go controllers[c].Run(ctx, metrics[c])
+	}
 
   Loop:
 	for {
@@ -125,7 +123,9 @@ func main() {
 				})
 			}
 		case <-s:
-			ecotouch.Close(ctx)
+			for _, c := range activeControllers {
+				controllers[c].Close(ctx)
+			}
 			cancel()
 			break Loop
 		}
