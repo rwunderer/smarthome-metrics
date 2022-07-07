@@ -9,19 +9,29 @@ import (
 
 type Fronius struct {
 	BaseUrl        string `yaml:"baseUrl"`
+	Prefix         string `yaml:"prefix"`
 	MeterOffsetIn  int    `yaml:"meterOffsetIn"`
 	MeterOffsetOut int    `yaml:"meterOffsetOut"`
 }
 
 type Ecotouch struct {
-	BaseUrl        string `yaml:"baseUrl"`
-	Username        string `yaml:"username"`
-	Password        string `yaml:"password"`
+	BaseUrl  string `yaml:"baseUrl"`
+	Prefix   string `yaml:"prefix"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
+
+type Graphite struct {
+	Hostname string `yaml:"hostname"`
+	Port     int    `yaml:"port"`
+	Prefix   string `yaml:"prefix"`
+	Protocol string `yaml:"protocol"`
 }
 
 type Config struct {
-	Fronius Fronius `yaml:"fronius"`
+	Fronius  Fronius  `yaml:"fronius"`
 	Ecotouch Ecotouch `yaml:"ecotouch"`
+	Graphite Graphite `yaml:"graphite"`
 }
 
 func (conf *Config) ReadFile(inFile string) error {

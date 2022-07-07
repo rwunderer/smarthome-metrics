@@ -1,5 +1,17 @@
 fronius:
   baseUrl: http://fronius.local
+  prefix: fronius
+  meterOffsetIn: 1234
+  meterOffsetOut: -5432
 
 ecotouch:
   baseUrl: http://ecotouch.local
+  prefix: ecotouch
+  username: user
+  password: pass
+
+graphite:
+  hostname: graphite.local
+  port: 2003
+  prefix: metrics.prefix
+  protocol: tcp

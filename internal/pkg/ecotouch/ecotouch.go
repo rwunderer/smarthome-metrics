@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -15,14 +15,14 @@ import (
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 )
 
-var modules = map[string]struct{} {
-	"main": {},
-	"geo": {},
-	"water": {},
+var modules = map[string]struct{}{
+	"main":    {},
+	"geo":     {},
+	"water":   {},
 	"heating": {},
 	"cooling": {},
-	"comp1": {},
-	"comp2": {},
+	"comp1":   {},
+	"comp2":   {},
 }
 
 type EcotouchController struct {
@@ -159,7 +159,7 @@ func (controller *EcotouchController) getMetrics(ctx context.Context, metrics *m
 				switch m[0] {
 				case "I51":
 					for _, w := range stateWord {
-						metrics.Set(fmt.Sprintf("%s.%s", w.module, w.name), float64(int(val) & w.flag))
+						metrics.Set(fmt.Sprintf("%s.%s", w.module, w.name), float64(int(val)&w.flag))
 					}
 				case "I5":
 					day = int(val)
@@ -172,7 +172,7 @@ func (controller *EcotouchController) getMetrics(ctx context.Context, metrics *m
 				case "I9":
 					minute = int(val)
 				default:
-					metrics.Set(fmt.Sprintf("%s.%s", tag.module, tag.name), val * tag.fact)
+					metrics.Set(fmt.Sprintf("%s.%s", tag.module, tag.name), val*tag.fact)
 				}
 			}
 		}
@@ -181,7 +181,7 @@ func (controller *EcotouchController) getMetrics(ctx context.Context, metrics *m
 	if zone, err := time.LoadLocation("Europe/Vienna"); err == nil {
 		t := time.Date(year, time.Month(month), day, hour, minute, 0, 0, zone)
 		metrics.Set("main.datetime", float64(t.Unix()))
-		metrics.Set("main.time", float64(hour * 3600 + minute * 60))
+		metrics.Set("main.time", float64(hour*3600+minute*60))
 		metrics.Set("main.timediff", time.Since(t).Seconds())
 		log.Debugf("datetime=%v", t.UTC())
 	}

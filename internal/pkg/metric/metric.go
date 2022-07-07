@@ -5,18 +5,22 @@ import (
 	"time"
 )
 
+type GraphiteMap map[string]float64
+
 type Metric struct {
 	Value float64
 	Time  time.Time
 }
 
 type Metrics struct {
+	prefix  string
 	metrics map[string]Metric
 	lock    sync.RWMutex
 }
 
-func NewMetrics() *Metrics {
+func NewMetrics(prefix string) *Metrics {
 	m := new(Metrics)
+	m.prefix = prefix
 	m.metrics = make(map[string]Metric)
 
 	return m
@@ -40,8 +44,18 @@ func (m *Metrics) Get(key string) Metric {
 	return rv
 }
 
-func (m *Metrics) Iterate(f func(string, Metric)) {
+func (m *Metrics) Iterate(f func(string, string, Metric)) {
 	for k, v := range m.metrics {
-		f(k, v)
+		f(m.prefix, k, v)
 	}
+}
+
+func (m *Metrics) GetGraphiteMap() GraphiteMap {
+	r := make(GraphiteMap)
+
+	for k, v := range m.metrics {
+		r[m.prefix+"."+k] = v.Value
+	}
+
+	return r
 }

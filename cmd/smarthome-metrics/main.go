@@ -5,16 +5,17 @@ import (
 	"flag"
 	"os"
 	"os/signal"
-  "syscall"
+	"syscall"
 	"time"
 
 	"github.com/joho/godotenv"
+	graphite "github.com/jtaczanowski/go-graphite-client"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/config"
-	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
-	"github.com/rwunderer/smarthome-metrics/internal/pkg/fronius"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/ecotouch"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/fronius"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 )
 
 func init() {
@@ -97,6 +98,14 @@ func main() {
 	controllers["fronius"], _ = fronius.NewController(&config.Fronius)
 	controllers["ecotouch"], _ = ecotouch.NewController(&config.Ecotouch)
 
+	// create graphite output
+	graphiteClient := graphite.NewClient(
+		config.Graphite.Hostname,
+		config.Graphite.Port,
+		config.Graphite.Prefix,
+		config.Graphite.Protocol,
+	)
+
 	// run main loop
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -106,21 +115,49 @@ func main() {
 	defer cancel()
 
 	metrics := make(map[string]*metric.Metrics)
-	metrics["fronius"] = metric.NewMetrics()
-	metrics["ecotouch"] = metric.NewMetrics()
+	metrics["fronius"] = metric.NewMetrics(config.Fronius.Prefix)
+	metrics["ecotouch"] = metric.NewMetrics(config.Ecotouch.Prefix)
 
 	for _, c := range activeControllers {
 		go controllers[c].Run(ctx, metrics[c])
 	}
 
-  Loop:
+	time.Sleep(3 * time.Second)
+
+	for c, m := range metrics {
+		if err := graphiteClient.SendData(m.GetGraphiteMap()); err != nil {
+			log.Errorf("Error sending metrics to %v:%v: %v",
+				config.Graphite.Hostname,
+				config.Graphite.Port,
+				err,
+			)
+		} else {
+			log.Infof("Sent %v metrics to %v:%v",
+				c,
+				config.Graphite.Hostname,
+				config.Graphite.Port,
+			)
+		}
+	}
+
+Loop:
 	for {
 		select {
-		case <-time.After(3 * time.Second):
-			for _, m := range metrics {
-				m.Iterate(func(k string, v metric.Metric) {
-					log.Infof("metric %v = %v @ %v", k, v.Value, v.Time.Unix())
-				})
+		case <-time.After(30 * time.Second):
+			for c, m := range metrics {
+				if err := graphiteClient.SendData(m.GetGraphiteMap()); err != nil {
+					log.Errorf("Error sending metrics to %v:%v: %v",
+						config.Graphite.Hostname,
+						config.Graphite.Port,
+						err,
+					)
+				} else {
+					log.Infof("Sent %v metrics to %v:%v",
+						c,
+						config.Graphite.Hostname,
+						config.Graphite.Port,
+					)
+				}
 			}
 		case <-s:
 			for _, c := range activeControllers {
