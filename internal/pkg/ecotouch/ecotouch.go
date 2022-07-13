@@ -159,7 +159,16 @@ func (controller *EcotouchController) getMetrics(ctx context.Context, metrics *m
 				switch m[0] {
 				case "I51":
 					for _, w := range stateWord {
-						metrics.Set(fmt.Sprintf("%s.%s", w.module, w.name), float64(int(val)&w.flag))
+						var state float64
+
+						if ((int(val) & w.flag) == w.flag) {
+							state = float64(1)
+						} else {
+							state = float64(0)
+						}
+
+						log.Tracef("I51=%v stateWord: %s.%s=%v", val, w.module, w.name, state)
+						metrics.Set(fmt.Sprintf("%s.%s", w.module, w.name), state)
 					}
 				case "I5":
 					day = int(val)
