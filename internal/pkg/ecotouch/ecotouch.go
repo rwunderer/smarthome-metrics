@@ -17,6 +17,7 @@ import (
 
 var modules = map[string]struct{}{
 	"main":    {},
+	"outside": {},
 	"geo":     {},
 	"water":   {},
 	"heating": {},
