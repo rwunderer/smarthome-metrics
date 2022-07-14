@@ -45,6 +45,9 @@ func (m *Metrics) Get(key string) Metric {
 }
 
 func (m *Metrics) Iterate(f func(string, string, Metric)) {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
 	for k, v := range m.metrics {
 		f(m.prefix, k, v)
 	}
@@ -52,6 +55,9 @@ func (m *Metrics) Iterate(f func(string, string, Metric)) {
 
 func (m *Metrics) GetGraphiteMap() GraphiteMap {
 	r := make(GraphiteMap)
+
+	m.lock.RLock()
+	defer m.lock.RUnlock()
 
 	for k, v := range m.metrics {
 		r[m.prefix+"."+k] = v.Value
