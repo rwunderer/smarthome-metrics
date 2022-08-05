@@ -10,6 +10,7 @@ import (
 )
 
 type FroniusPowerFlowSite struct {
+	ETotal						 float64 `json:"E_Total"`
 	PAkku              float64 `json:"P_Akku"`
 	PGrid              float64 `json:"P_Grid"`
 	PLoad              float64 `json:"P_Load"`
@@ -52,6 +53,7 @@ func (controller *FroniusController) getPowerFlow(ctx context.Context, metrics *
 	}
 
 	log.WithFields(log.Fields{
+		"energy":          int(d.Body.Data.Site.ETotal),
 		"akku":            int(d.Body.Data.Site.PAkku),
 		"grid":            int(d.Body.Data.Site.PGrid),
 		"load":            int(d.Body.Data.Site.PLoad),
@@ -61,6 +63,7 @@ func (controller *FroniusController) getPowerFlow(ctx context.Context, metrics *
 		"timestamp":       d.Head.Timestamp,
 	}).Debug("Successfully parsed PowerFlow data")
 
+	metrics.Set("inverter.e_total", d.Body.Data.Site.ETotal)
 	metrics.Set("inverter.p_akku", d.Body.Data.Site.PAkku)
 	metrics.Set("inverter.p_grid", d.Body.Data.Site.PGrid)
 	metrics.Set("inverter.p_load", d.Body.Data.Site.PLoad)
