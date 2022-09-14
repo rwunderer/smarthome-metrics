@@ -10,7 +10,7 @@ import (
 )
 
 type FroniusPowerFlowSite struct {
-	ETotal						 float64 `json:"E_Total"`
+	ETotal             float64 `json:"E_Total"`
 	PAkku              float64 `json:"P_Akku"`
 	PGrid              float64 `json:"P_Grid"`
 	PLoad              float64 `json:"P_Load"`

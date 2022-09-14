@@ -666,17 +666,17 @@ type stateDefinition struct {
 }
 
 var stateWord = []stateDefinition{
-	{flag: 1, name: "state_sourcepump", module: "main", usage: 1},         // 'Status Quellenpumpe'
-	{flag: 2, name: "state_heatpump", module: "main", usage: 1},          // 'Status Heizungsumwälzpumpe'
-	{flag: 4, name: "state_evd", module: "main", usage: 1},                // 'Status Freigabe Regelung EVD/Magnetventil'
-	{flag: 8, name: "state_comp1", module: "main", usage: 1},            // 'Status Verdichter 1'
-	{flag: 16, name: "state_comp2", module: "main", usage: 1},           // 'Status Verdichter 2'
-	{flag: 32, name: "state_extheater", module: "main", usage: 1},        // 'Status externer Wärmeerzeuger'
-	{flag: 64, name: "state_alarm", module: "main", usage: 1},            // 'Status Alarmausgang'
-	{flag: 128, name: "state_cooling", module: "main", usage: 1},         // 'Status Motorventil Kühlbetrieb'
-	{flag: 256, name: "state_water", module: "main", usage: 1},          // 'Status Motorventil Warmwasser'
-	{flag: 512, name: "state_pool", module: "main", usage: 1},            // 'Status Motorventil Pool'
-	{flag: 1024, name: "state_solar", module: "main", usage: 1},         // 'Status Solarbetrieb'
+	{flag: 1, name: "state_sourcepump", module: "main", usage: 1},     // 'Status Quellenpumpe'
+	{flag: 2, name: "state_heatpump", module: "main", usage: 1},       // 'Status Heizungsumwälzpumpe'
+	{flag: 4, name: "state_evd", module: "main", usage: 1},            // 'Status Freigabe Regelung EVD/Magnetventil'
+	{flag: 8, name: "state_comp1", module: "main", usage: 1},          // 'Status Verdichter 1'
+	{flag: 16, name: "state_comp2", module: "main", usage: 1},         // 'Status Verdichter 2'
+	{flag: 32, name: "state_extheater", module: "main", usage: 1},     // 'Status externer Wärmeerzeuger'
+	{flag: 64, name: "state_alarm", module: "main", usage: 1},         // 'Status Alarmausgang'
+	{flag: 128, name: "state_cooling", module: "main", usage: 1},      // 'Status Motorventil Kühlbetrieb'
+	{flag: 256, name: "state_water", module: "main", usage: 1},        // 'Status Motorventil Warmwasser'
+	{flag: 512, name: "state_pool", module: "main", usage: 1},         // 'Status Motorventil Pool'
+	{flag: 1024, name: "state_solar", module: "main", usage: 1},       // 'Status Solarbetrieb'
 	{flag: 2048, name: "state_cooling4way", module: "main", usage: 1}, // 'Status 4-Wegeventil im Kältekreis'
 }
 
