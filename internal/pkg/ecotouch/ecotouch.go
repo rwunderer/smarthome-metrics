@@ -227,7 +227,7 @@ func (controller *EcotouchController) getMetrics(ctx context.Context, metrics *m
 }
 
 // Set water temperature
-func (controller *EcotouchController) setWaterTemp(ctx context.Context, desiredValue float64) error {
+func (controller *EcotouchController) SetWaterTemp(ctx context.Context, desiredValue float64) error {
 	retry := 2
 	url := controller.writeUrl + fmt.Sprintf("?returnValue=true&n=1&t1=A38&v1=%d", int(desiredValue*10))
 

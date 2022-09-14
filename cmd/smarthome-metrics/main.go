@@ -16,6 +16,7 @@ import (
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/fronius"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/graphite"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/watertemp"
 )
 
 // Initialize log module
@@ -99,12 +100,15 @@ func readConfig() *config.Config {
 }
 
 // Create all controllers
-func createControllers(config *config.Config) map[string]SmarthomeController {
+func createControllers(config *config.Config) (map[string]SmarthomeController, *watertemp.WaterTemperatureController) {
 	controllers := make(map[string]SmarthomeController)
 	controllers["fronius"], _ = fronius.NewController(&config.Fronius)
-	controllers["ecotouch"], _ = ecotouch.NewController(&config.Ecotouch)
 
-	return controllers
+	etController, _ := ecotouch.NewController(&config.Ecotouch)
+	controllers["ecotouch"] = etController
+	wtController := watertemp.NewController(etController)
+
+	return controllers, wtController
 }
 
 // Initialize metric storage
@@ -116,11 +120,12 @@ func initMetrics(config *config.Config) map[string]*metric.Metrics {
 	return metrics
 }
 
+// Main
 func main() {
 
 	// initialize
 	config := readConfig()
-	controllers := createControllers(config)
+	controllers, wtController := createControllers(config)
 	graphiteClient := graphite.NewClient(config)
 	metrics := initMetrics(config)
 
@@ -141,6 +146,7 @@ func main() {
 	for c, m := range metrics {
 		graphiteClient.Send(c, m)
 	}
+	wtController.Reconcile(ctx, metrics["fronius"], metrics["ecotouch"])
 
 Loop:
 	for {
@@ -149,11 +155,12 @@ Loop:
 			for c, m := range metrics {
 				graphiteClient.Send(c, m)
 			}
+
+			wtController.Reconcile(ctx, metrics["fronius"], metrics["ecotouch"])
 		case <-s:
 			for _, c := range config.ActiveControllers {
 				controllers[c].Close(ctx)
 			}
-			cancel()
 			break Loop
 		}
 	}
