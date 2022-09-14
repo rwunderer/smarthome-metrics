@@ -9,15 +9,16 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	graphite "github.com/jtaczanowski/go-graphite-client"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/config"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/ecotouch"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/fronius"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/graphite"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 )
 
+// Initialize log module
 func init() {
 	// load optional .env file
 	if _, err := os.Stat(".env"); err == nil {
@@ -57,6 +58,7 @@ func init() {
 	}
 }
 
+// Log cleanup
 func cleanUp() {
 	log.Infof("Clean up")
 }
@@ -66,6 +68,7 @@ type SmarthomeController interface {
 	Close(ctx context.Context)
 }
 
+// Read and parse config file
 func readConfig() *config.Config {
 	var configFile string
 
@@ -95,22 +98,31 @@ func readConfig() *config.Config {
 	return config
 }
 
-func main() {
-
-	config := readConfig()
-
-	// create controllers
+// Create all controllers
+func createControllers(config *config.Config) map[string]SmarthomeController {
 	controllers := make(map[string]SmarthomeController)
 	controllers["fronius"], _ = fronius.NewController(&config.Fronius)
 	controllers["ecotouch"], _ = ecotouch.NewController(&config.Ecotouch)
 
-	// create graphite output
-	graphiteClient := graphite.NewClient(
-		config.Graphite.Hostname,
-		config.Graphite.Port,
-		config.Graphite.Prefix,
-		config.Graphite.Protocol,
-	)
+	return controllers
+}
+
+// Initialize metric storage
+func initMetrics(config *config.Config) map[string]*metric.Metrics {
+	metrics := make(map[string]*metric.Metrics)
+	metrics["fronius"] = metric.NewMetrics(config.Fronius.Prefix)
+	metrics["ecotouch"] = metric.NewMetrics(config.Ecotouch.Prefix)
+
+	return metrics
+}
+
+func main() {
+
+	// initialize
+	config := readConfig()
+	controllers := createControllers(config)
+	graphiteClient := graphite.NewClient(config)
+	metrics := initMetrics(config)
 
 	// run main loop
 	s := make(chan os.Signal, 1)
@@ -120,10 +132,6 @@ func main() {
 	defer cleanUp()
 	defer cancel()
 
-	metrics := make(map[string]*metric.Metrics)
-	metrics["fronius"] = metric.NewMetrics(config.Fronius.Prefix)
-	metrics["ecotouch"] = metric.NewMetrics(config.Ecotouch.Prefix)
-
 	for _, c := range config.ActiveControllers {
 		go controllers[c].Run(ctx, metrics[c])
 	}
@@ -131,19 +139,7 @@ func main() {
 	time.Sleep(3 * time.Second)
 
 	for c, m := range metrics {
-		if err := graphiteClient.SendData(m.GetGraphiteMap()); err != nil {
-			log.Errorf("Error sending metrics to %v:%v: %v",
-				config.Graphite.Hostname,
-				config.Graphite.Port,
-				err,
-			)
-		} else {
-			log.Infof("Sent %v metrics to %v:%v",
-				c,
-				config.Graphite.Hostname,
-				config.Graphite.Port,
-			)
-		}
+		graphiteClient.Send(c, m)
 	}
 
 Loop:
@@ -151,19 +147,7 @@ Loop:
 		select {
 		case <-time.After(30 * time.Second):
 			for c, m := range metrics {
-				if err := graphiteClient.SendData(m.GetGraphiteMap()); err != nil {
-					log.Errorf("Error sending metrics to %v:%v: %v",
-						config.Graphite.Hostname,
-						config.Graphite.Port,
-						err,
-					)
-				} else {
-					log.Infof("Sent %v metrics to %v:%v",
-						c,
-						config.Graphite.Hostname,
-						config.Graphite.Port,
-					)
-				}
+				graphiteClient.Send(c, m)
 			}
 		case <-s:
 			for _, c := range config.ActiveControllers {
