@@ -29,9 +29,10 @@ type Graphite struct {
 }
 
 type Config struct {
-	Fronius  Fronius  `yaml:"fronius"`
-	Ecotouch Ecotouch `yaml:"ecotouch"`
-	Graphite Graphite `yaml:"graphite"`
+	ActiveControllers []string `yaml:"activeControllers"`
+	Fronius           Fronius  `yaml:"fronius"`
+	Ecotouch          Ecotouch `yaml:"ecotouch"`
+	Graphite          Graphite `yaml:"graphite"`
 }
 
 func (conf *Config) ReadFile(inFile string) error {
@@ -39,6 +40,8 @@ func (conf *Config) ReadFile(inFile string) error {
 	if err != nil {
 		return fmt.Errorf("failed to read config file: %v", err)
 	}
+
+	conf.ActiveControllers = []string{"fronius", "ecotouch"} // default value
 
 	if err := yaml.Unmarshal(content, &conf); err != nil {
 		return fmt.Errorf("failed to unmarshal config file: %v", err)

@@ -66,9 +66,8 @@ type SmarthomeController interface {
 	Close(ctx context.Context)
 }
 
-func main() {
+func readConfig() *config.Config {
 	var configFile string
-	activeControllers := []string{"fronius", "ecotouch"}
 
 	// define config file
 	configFile, ok := os.LookupEnv("CONFIG_FILE")
@@ -92,6 +91,13 @@ func main() {
 	// parse command-line flags
 	flag.Parse()
 	log.Infof("Fronius base url is %v", config.Fronius.BaseUrl)
+
+	return config
+}
+
+func main() {
+
+	config := readConfig()
 
 	// create controllers
 	controllers := make(map[string]SmarthomeController)
@@ -118,7 +124,7 @@ func main() {
 	metrics["fronius"] = metric.NewMetrics(config.Fronius.Prefix)
 	metrics["ecotouch"] = metric.NewMetrics(config.Ecotouch.Prefix)
 
-	for _, c := range activeControllers {
+	for _, c := range config.ActiveControllers {
 		go controllers[c].Run(ctx, metrics[c])
 	}
 
@@ -160,7 +166,7 @@ Loop:
 				}
 			}
 		case <-s:
-			for _, c := range activeControllers {
+			for _, c := range config.ActiveControllers {
 				controllers[c].Close(ctx)
 			}
 			cancel()
