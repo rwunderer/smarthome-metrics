@@ -15,6 +15,30 @@ import (
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 )
 
+/*
+
+Set the water temperature to 47.8°C (478):
+
+http://heating.krampusburg.local/cgi/writeTags?returnValue=true&n=1&t1=A38&v1=478&_=1663154109742
+{
+	"GET": {
+		"scheme": "http",
+		"host": "heating.krampusburg.local",
+		"filename": "/cgi/writeTags",
+		"query": {
+			"returnValue": "true",
+			"n": "1",
+			"t1": "A38",
+			"v1": "478",
+			"_": "1663154109742"
+		},
+		"remote": {
+			"Address": "192.168.98.71:80"
+		}
+	}
+}
+*/
+
 var modules = map[string]struct{}{
 	"main":    {},
 	"outside": {},
@@ -31,6 +55,7 @@ type EcotouchController struct {
 	loginUrl  string
 	logoutUrl string
 	readUrl   string
+	writeUrl  string
 	client    http.Client
 }
 
@@ -53,6 +78,7 @@ func NewController(config *config.Ecotouch) (*EcotouchController, error) {
 		}
 	}
 	readUrl := fmt.Sprintf("%s/cgi/readTags?n=%v%v", config.BaseUrl, tagCount, tagPar)
+	writeUrl := fmt.Sprintf("%s/cgi/writeTags", config.BaseUrl)
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -68,6 +94,7 @@ func NewController(config *config.Ecotouch) (*EcotouchController, error) {
 		loginUrl:  loginUrl,
 		logoutUrl: logoutUrl,
 		readUrl:   readUrl,
+		writeUrl:  writeUrl,
 		client:    client,
 	}, nil
 }
@@ -162,7 +189,7 @@ func (controller *EcotouchController) getMetrics(ctx context.Context, metrics *m
 					for _, w := range stateWord {
 						var state float64
 
-						if ((int(val) & w.flag) == w.flag) {
+						if (int(val) & w.flag) == w.flag {
 							state = float64(1)
 						} else {
 							state = float64(0)
@@ -194,6 +221,37 @@ func (controller *EcotouchController) getMetrics(ctx context.Context, metrics *m
 		metrics.Set("main.time", float64(hour*3600+minute*60))
 		metrics.Set("main.timediff", time.Since(t).Seconds())
 		log.Debugf("datetime=%v", t.UTC())
+	}
+
+	return nil
+}
+
+// Set water temperature
+func (controller *EcotouchController) setWaterTemp(ctx context.Context, desiredValue float64) error {
+	retry := 2
+	url := controller.writeUrl + fmt.Sprintf("?returnValue=true&n=1&t1=A38&v1=%d", int(desiredValue*10))
+
+	for {
+		retry--
+		_, err := controller.retrieveHttpData(ctx, url)
+
+		if err != nil {
+			if err.Error() == "Login required" {
+				err = controller.login(ctx, controller.loginUrl)
+			}
+
+			if err != nil {
+				log.Errorf("Error writing Ecotouch Water temperature: %v", err)
+				return nil
+			}
+
+		} else {
+			retry = 0
+		}
+
+		if retry < 1 {
+			break
+		}
 	}
 
 	return nil
