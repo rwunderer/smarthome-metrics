@@ -106,7 +106,7 @@ func createControllers(config *config.Config) (map[string]SmarthomeController, *
 
 	etController, _ := ecotouch.NewController(&config.Ecotouch)
 	controllers["ecotouch"] = etController
-	wtController := watertemp.NewController(etController)
+	wtController := watertemp.NewController(&config.WaterTemperature, etController)
 
 	return controllers, wtController
 }
@@ -126,7 +126,7 @@ func main() {
 	// initialize
 	config := readConfig()
 	controllers, wtController := createControllers(config)
-	graphiteClient := graphite.NewClient(config)
+	graphiteClient := graphite.NewClient(&config.Graphite)
 	metrics := initMetrics(config)
 
 	// run main loop

@@ -5,34 +5,19 @@ import (
 	"io/ioutil"
 
 	yaml "gopkg.in/yaml.v2"
+
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/ecotouch"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/fronius"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/graphite"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/watertemp"
 )
 
-type Fronius struct {
-	BaseUrl        string `yaml:"baseUrl"`
-	Prefix         string `yaml:"prefix"`
-	MeterOffsetIn  int    `yaml:"meterOffsetIn"`
-	MeterOffsetOut int    `yaml:"meterOffsetOut"`
-}
-
-type Ecotouch struct {
-	BaseUrl  string `yaml:"baseUrl"`
-	Prefix   string `yaml:"prefix"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-}
-
-type Graphite struct {
-	Hostname string `yaml:"hostname"`
-	Port     int    `yaml:"port"`
-	Prefix   string `yaml:"prefix"`
-	Protocol string `yaml:"protocol"`
-}
-
 type Config struct {
-	ActiveControllers []string `yaml:"activeControllers"`
-	Fronius           Fronius  `yaml:"fronius"`
-	Ecotouch          Ecotouch `yaml:"ecotouch"`
-	Graphite          Graphite `yaml:"graphite"`
+	ActiveControllers []string         `yaml:"activeControllers"`
+	Fronius           fronius.Config   `yaml:"fronius"`
+	Ecotouch          ecotouch.Config  `yaml:"ecotouch"`
+	Graphite          graphite.Config  `yaml:"graphite"`
+	WaterTemperature  watertemp.Config `yaml:"watertemp"`
 }
 
 func (conf *Config) ReadFile(inFile string) error {
@@ -42,6 +27,10 @@ func (conf *Config) ReadFile(inFile string) error {
 	}
 
 	conf.ActiveControllers = []string{"fronius", "ecotouch"} // default value
+	conf.Ecotouch = ecotouch.GetDefaultConfig()
+	conf.Fronius = fronius.GetDefaultConfig()
+	conf.Graphite = graphite.GetDefaultConfig()
+	conf.WaterTemperature = watertemp.GetDefaultConfig()
 
 	if err := yaml.Unmarshal(content, &conf); err != nil {
 		return fmt.Errorf("failed to unmarshal config file: %v", err)

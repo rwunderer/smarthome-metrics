@@ -15,3 +15,10 @@ graphite:
   port: 2003
   prefix: metrics.prefix
   protocol: tcp
+
+watertemp:
+  produceThreshold:  -2000,
+  produceMinTime:    10,
+  producingTemp:     55,
+  normalTemp:        48,
+  tempChangeMinTime: 30,

@@ -4,24 +4,35 @@ import (
 	graphiteClient "github.com/jtaczanowski/go-graphite-client"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/rwunderer/smarthome-metrics/internal/pkg/config"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 )
 
+type Config struct {
+	Hostname string `yaml:"hostname"`
+	Port     int    `yaml:"port"`
+	Prefix   string `yaml:"prefix"`
+	Protocol string `yaml:"protocol"`
+}
+
 type Client struct {
-	config config.Graphite
+	config *Config
 	client *graphiteClient.Client
 }
 
+// Get Default configuration
+func GetDefaultConfig() Config {
+	return Config{}
+}
+
 // Create new client object
-func NewClient(config *config.Config) *Client {
+func NewClient(config *Config) *Client {
 	return &Client{
-		config: config.Graphite,
+		config: config,
 		client: graphiteClient.NewClient(
-			config.Graphite.Hostname,
-			config.Graphite.Port,
-			config.Graphite.Prefix,
-			config.Graphite.Protocol,
+			config.Hostname,
+			config.Port,
+			config.Prefix,
+			config.Protocol,
 		),
 	}
 }

@@ -8,20 +8,31 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/rwunderer/smarthome-metrics/internal/pkg/config"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 )
 
+type Config struct {
+	BaseUrl        string `yaml:"baseUrl"`
+	Prefix         string `yaml:"prefix"`
+	MeterOffsetIn  int    `yaml:"meterOffsetIn"`
+	MeterOffsetOut int    `yaml:"meterOffsetOut"`
+}
+
 type FroniusController struct {
-	Config        *config.Fronius
+	Config        *Config
 	meterUrl      string
 	flowUrl       string
 	batteryUrl    string
 	batteryAddUrl string
 }
 
+// Get Default configuration
+func GetDefaultConfig() Config {
+	return Config{}
+}
+
 // NewController creates a new Controller
-func NewController(config *config.Fronius) (*FroniusController, error) {
+func NewController(config *Config) (*FroniusController, error) {
 
 	if err := validateConfig(config); err != nil {
 		return nil, fmt.Errorf("Fronius Controller config invalid: %v", err)
@@ -42,7 +53,7 @@ func NewController(config *config.Fronius) (*FroniusController, error) {
 }
 
 // Validate configuration
-func validateConfig(conf *config.Fronius) error {
+func validateConfig(conf *Config) error {
 	var errs []string
 
 	if conf.BaseUrl == "" {

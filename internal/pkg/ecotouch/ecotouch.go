@@ -11,7 +11,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/rwunderer/smarthome-metrics/internal/pkg/config"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 )
 
@@ -50,8 +49,15 @@ var modules = map[string]struct{}{
 	"comp2":   {},
 }
 
+type Config struct {
+	BaseUrl  string `yaml:"baseUrl"`
+	Prefix   string `yaml:"prefix"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
+
 type EcotouchController struct {
-	Config    *config.Ecotouch
+	Config    *Config
 	loginUrl  string
 	logoutUrl string
 	readUrl   string
@@ -59,8 +65,13 @@ type EcotouchController struct {
 	client    http.Client
 }
 
+// Get Default configuration
+func GetDefaultConfig() Config {
+	return Config{}
+}
+
 // NewController creates a new Controller
-func NewController(config *config.Ecotouch) (*EcotouchController, error) {
+func NewController(config *Config) (*EcotouchController, error) {
 
 	if err := validateConfig(config); err != nil {
 		return nil, fmt.Errorf("Ecotouch Controller config invalid: %v", err)
@@ -100,7 +111,7 @@ func NewController(config *config.Ecotouch) (*EcotouchController, error) {
 }
 
 // Validate configuration
-func validateConfig(conf *config.Ecotouch) error {
+func validateConfig(conf *Config) error {
 	var errs []string
 
 	if conf.BaseUrl == "" {
