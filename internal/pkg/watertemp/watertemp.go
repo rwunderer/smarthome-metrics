@@ -78,9 +78,16 @@ func (wt *WaterTemperatureController) Reconcile(ctx context.Context, metrics met
 	wt.determineTemperatureWanted()
 
 	if wt.temperatureChangeWanted(ecotouchMetrics, now) {
-		log.Infof("Setting water temperature to %v", wt.tempWanted)
-		if wt.ecotouch.SetValue(ctx, "water.temp_set2", wt.tempWanted) == nil {
+
+		if (wt.ecotouch == nil) {
+			log.Warnf("Not actually setting water temperature: no writer appliance!")
 			wt.lastTempChange = now
+
+		} else {
+			log.Infof("Setting water temperature to %v", wt.tempWanted)
+			if wt.ecotouch.SetValue(ctx, "water.temp_set2", wt.tempWanted) == nil {
+				wt.lastTempChange = now
+			}
 		}
 	}
 }
