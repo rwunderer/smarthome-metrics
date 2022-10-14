@@ -13,7 +13,8 @@ import (
 )
 
 type Config struct {
-	ActiveControllers []string         `yaml:"activeControllers"`
+	ActiveAppliances  []string         `yaml:"appliances"`
+	ActiveControllers []string         `yaml:"controllers"`
 	Fronius           fronius.Config   `yaml:"fronius"`
 	Ecotouch          ecotouch.Config  `yaml:"ecotouch"`
 	Graphite          graphite.Config  `yaml:"graphite"`
@@ -26,7 +27,8 @@ func (conf *Config) ReadFile(inFile string) error {
 		return fmt.Errorf("failed to read config file: %v", err)
 	}
 
-	conf.ActiveControllers = []string{"fronius", "ecotouch"} // default value
+	conf.ActiveAppliances = []string{"fronius", "ecotouch"} // default value
+	conf.ActiveControllers = []string{"ecotouch"}           // default value
 	conf.Ecotouch = ecotouch.GetDefaultConfig()
 	conf.Fronius = fronius.GetDefaultConfig()
 	conf.Graphite = graphite.GetDefaultConfig()

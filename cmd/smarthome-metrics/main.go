@@ -98,11 +98,28 @@ func readConfig() *config.Config {
 // Create all controllers
 func createControllers(config *config.Config) (controllers.ApplianceMap, controllers.ControllersMap) {
 	appliances := make(controllers.ApplianceMap)
-	appliances["fronius"], _ = fronius.NewController(&config.Fronius)
-	appliances["ecotouch"], _ = ecotouch.NewController(&config.Ecotouch)
+
+	for _, name := range config.ActiveAppliances {
+		switch name {
+		case "fronius":
+			appliances[name], _ = fronius.NewController(&config.Fronius)
+		case "ecotouch":
+			appliances[name], _ = ecotouch.NewController(&config.Ecotouch)
+		default:
+			log.Warnf("Ignoring unkown appliance type %v", name)
+		}
+	}
 
 	controllers := make(controllers.ControllersMap)
-	controllers["ecotouch"] = watertemp.NewController(&config.WaterTemperature, appliances["ecotouch"])
+
+	for _, name := range config.ActiveControllers {
+		switch name {
+		case "ecotouch":
+			controllers[name] = watertemp.NewController(&config.WaterTemperature, appliances["ecotouch"])
+		default:
+			log.Warnf("Ignoring unkown controller type %v", name)
+		}
+	}
 
 	return appliances, controllers
 }
@@ -110,8 +127,17 @@ func createControllers(config *config.Config) (controllers.ApplianceMap, control
 // Initialize metric storage
 func initMetrics(config *config.Config) map[string]*metric.Metrics {
 	metrics := make(metric.MetricsMap)
-	metrics["fronius"] = metric.NewMetrics(config.Fronius.Prefix)
-	metrics["ecotouch"] = metric.NewMetrics(config.Ecotouch.Prefix)
+
+	for _, name := range config.ActiveAppliances {
+		switch name {
+		case "fronius":
+			metrics[name] = metric.NewMetrics(config.Fronius.Prefix)
+		case "ecotouch":
+			metrics[name] = metric.NewMetrics(config.Ecotouch.Prefix)
+		default:
+			log.Warnf("Ignoring unkown metric type %v", name)
+		}
+	}
 
 	return metrics
 }
@@ -133,8 +159,8 @@ func main() {
 	defer cleanUp()
 	defer cancel()
 
-	for _, c := range config.ActiveControllers {
-		go appliances[c].Run(ctx, metrics[c])
+	for name, appliance := range appliances {
+		go appliance.Run(ctx, metrics[name])
 	}
 
 	time.Sleep(3 * time.Second)
@@ -143,8 +169,8 @@ func main() {
 		graphiteClient.Send(c, m)
 	}
 
-	for _, c := range controllers {
-		c.Reconcile(ctx, metrics)
+	for _, controller := range controllers {
+		controller.Reconcile(ctx, metrics)
 	}
 
 Loop:
@@ -155,12 +181,12 @@ Loop:
 				graphiteClient.Send(c, m)
 			}
 
-			for _, c := range controllers {
-				c.Reconcile(ctx, metrics)
+			for _, controller := range controllers {
+				controller.Reconcile(ctx, metrics)
 			}
 		case <-s:
-			for _, c := range config.ActiveControllers {
-				appliances[c].Close(ctx)
+			for _, appliance := range appliances {
+				appliance.Close(ctx)
 			}
 			break Loop
 		}
