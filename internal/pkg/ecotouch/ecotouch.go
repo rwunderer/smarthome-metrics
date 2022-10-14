@@ -238,9 +238,18 @@ func (controller *EcotouchController) getMetrics(ctx context.Context, metrics *m
 }
 
 // Set water temperature
-func (controller *EcotouchController) SetWaterTemp(ctx context.Context, desiredValue float64) error {
+func (controller *EcotouchController) SetValue(ctx context.Context, fieldName string, desiredValue float64) error {
+	var fieldTag string
+
+	switch fieldName {
+	case "water.temp_set2":
+		fieldTag = "A38"
+	default:
+		return fmt.Errorf("Field name %s not supported for writing", fieldName)
+	}
+
 	retry := 2
-	url := controller.writeUrl + fmt.Sprintf("?returnValue=true&n=1&t1=A38&v1=%d", int(desiredValue*10))
+	url := controller.writeUrl + fmt.Sprintf("?returnValue=true&n=1&t1=%s&v1=%d", fieldTag, int(desiredValue*10))
 
 	for {
 		retry--

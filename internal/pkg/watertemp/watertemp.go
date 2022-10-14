@@ -7,7 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/rwunderer/smarthome-metrics/internal/pkg/ecotouch"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/controllers"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
 )
 
@@ -27,7 +27,7 @@ type Config struct {
 }
 
 type WaterTemperatureController struct {
-	ecotouch *ecotouch.EcotouchController
+	ecotouch controllers.SmarthomeAppliance
 	config   *Config
 
 	gridState      gridState
@@ -48,7 +48,7 @@ func GetDefaultConfig() Config {
 }
 
 // Create a new Controller
-func NewController(config *Config, ecotouch *ecotouch.EcotouchController) *WaterTemperatureController {
+func NewController(config *Config, ecotouch controllers.SmarthomeAppliance) *WaterTemperatureController {
 	now := time.Now()
 
 	log.Infof("Initialized water temperature controller with producing temp %0.1f, normal temp %0.1f", config.ProducingTemp, config.NormalTemp)
@@ -62,7 +62,9 @@ func NewController(config *Config, ecotouch *ecotouch.EcotouchController) *Water
 }
 
 // Determine state and set water temperature if necessary
-func (wt *WaterTemperatureController) Reconcile(ctx context.Context, froniusMetrics *metric.Metrics, ecotouchMetrics *metric.Metrics) {
+func (wt *WaterTemperatureController) Reconcile(ctx context.Context, metrics metric.MetricsMap) {
+	froniusMetrics := metrics["fronius"]
+	ecotouchMetrics := metrics["ecotouch"]
 	now := time.Now()
 
 	wt.determineProduceState(froniusMetrics, now)
@@ -77,7 +79,7 @@ func (wt *WaterTemperatureController) Reconcile(ctx context.Context, froniusMetr
 
 	if wt.temperatureChangeWanted(ecotouchMetrics, now) {
 		log.Infof("Setting water temperature to %v", wt.tempWanted)
-		if wt.ecotouch.SetWaterTemp(ctx, wt.tempWanted) == nil {
+		if wt.ecotouch.SetValue(ctx, "water.temp_set2", wt.tempWanted) == nil {
 			wt.lastTempChange = now
 		}
 	}

@@ -12,6 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/config"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/controllers"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/ecotouch"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/fronius"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/graphite"
@@ -64,11 +65,6 @@ func cleanUp() {
 	log.Infof("Clean up")
 }
 
-type SmarthomeController interface {
-	Run(ctx context.Context, metrics *metric.Metrics) error
-	Close(ctx context.Context)
-}
-
 // Read and parse config file
 func readConfig() *config.Config {
 	var configFile string
@@ -100,20 +96,20 @@ func readConfig() *config.Config {
 }
 
 // Create all controllers
-func createControllers(config *config.Config) (map[string]SmarthomeController, *watertemp.WaterTemperatureController) {
-	controllers := make(map[string]SmarthomeController)
-	controllers["fronius"], _ = fronius.NewController(&config.Fronius)
+func createControllers(config *config.Config) (controllers.ApplianceMap, controllers.ControllersMap) {
+	appliances := make(controllers.ApplianceMap)
+	appliances["fronius"], _ = fronius.NewController(&config.Fronius)
+	appliances["ecotouch"], _ = ecotouch.NewController(&config.Ecotouch)
 
-	etController, _ := ecotouch.NewController(&config.Ecotouch)
-	controllers["ecotouch"] = etController
-	wtController := watertemp.NewController(&config.WaterTemperature, etController)
+	controllers := make(controllers.ControllersMap)
+	controllers["ecotouch"] = watertemp.NewController(&config.WaterTemperature, appliances["ecotouch"])
 
-	return controllers, wtController
+	return appliances, controllers
 }
 
 // Initialize metric storage
 func initMetrics(config *config.Config) map[string]*metric.Metrics {
-	metrics := make(map[string]*metric.Metrics)
+	metrics := make(metric.MetricsMap)
 	metrics["fronius"] = metric.NewMetrics(config.Fronius.Prefix)
 	metrics["ecotouch"] = metric.NewMetrics(config.Ecotouch.Prefix)
 
@@ -125,7 +121,7 @@ func main() {
 
 	// initialize
 	config := readConfig()
-	controllers, wtController := createControllers(config)
+	appliances, controllers := createControllers(config)
 	graphiteClient := graphite.NewClient(&config.Graphite)
 	metrics := initMetrics(config)
 
@@ -138,7 +134,7 @@ func main() {
 	defer cancel()
 
 	for _, c := range config.ActiveControllers {
-		go controllers[c].Run(ctx, metrics[c])
+		go appliances[c].Run(ctx, metrics[c])
 	}
 
 	time.Sleep(3 * time.Second)
@@ -146,7 +142,10 @@ func main() {
 	for c, m := range metrics {
 		graphiteClient.Send(c, m)
 	}
-	wtController.Reconcile(ctx, metrics["fronius"], metrics["ecotouch"])
+
+	for _, c := range controllers {
+		c.Reconcile(ctx, metrics)
+	}
 
 Loop:
 	for {
@@ -156,10 +155,12 @@ Loop:
 				graphiteClient.Send(c, m)
 			}
 
-			wtController.Reconcile(ctx, metrics["fronius"], metrics["ecotouch"])
+			for _, c := range controllers {
+				c.Reconcile(ctx, metrics)
+			}
 		case <-s:
 			for _, c := range config.ActiveControllers {
-				controllers[c].Close(ctx)
+				appliances[c].Close(ctx)
 			}
 			break Loop
 		}

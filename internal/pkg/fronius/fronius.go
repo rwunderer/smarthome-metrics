@@ -71,6 +71,11 @@ func validateConfig(conf *Config) error {
 func (controller *FroniusController) Close(ctx context.Context) {
 }
 
+// Empty function to satisfy writer interface
+func (controller *FroniusController) SetValue(ctx context.Context, fieldName string, desiredValue float64) error {
+	return nil
+}
+
 // Main run loop
 func (controller *FroniusController) Run(ctx context.Context, metrics *metric.Metrics) error {
 	var err error

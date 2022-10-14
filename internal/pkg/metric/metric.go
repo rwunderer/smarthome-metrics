@@ -18,6 +18,8 @@ type Metrics struct {
 	lock    sync.RWMutex
 }
 
+type MetricsMap map[string]*Metrics
+
 func NewMetrics(prefix string) *Metrics {
 	m := new(Metrics)
 	m.prefix = prefix
