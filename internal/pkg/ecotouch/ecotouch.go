@@ -77,6 +77,8 @@ func NewController(config *Config) (*EcotouchController, error) {
 		return nil, fmt.Errorf("Ecotouch Controller config invalid: %v", err)
 	}
 
+	log.Infof("Ecotouch base url is %v", config.BaseUrl)
+
 	loginUrl := fmt.Sprintf("%s/cgi/login?username=%s&password=%s", config.BaseUrl, config.Username, config.Password)
 	logoutUrl := fmt.Sprintf("%s/cgi/logout", config.BaseUrl)
 

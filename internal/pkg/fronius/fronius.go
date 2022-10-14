@@ -38,6 +38,8 @@ func NewController(config *Config) (*FroniusController, error) {
 		return nil, fmt.Errorf("Fronius Controller config invalid: %v", err)
 	}
 
+	log.Infof("Fronius base url is %v", config.BaseUrl)
+
 	meterUrl := fmt.Sprintf("%s/solar_api/v1/GetMeterRealtimeData.cgi?Scope=Device&DeviceId=0", config.BaseUrl)
 	flowUrl := fmt.Sprintf("%s/solar_api/v1/GetPowerFlowRealtimeData.fcgi?Scope=Device&DeviceId=0", config.BaseUrl)
 	batteryUrl := fmt.Sprintf("%s/solar_api/v1/GetStorageRealtimeData.cgi?Scope=Device&DeviceId=0", config.BaseUrl)

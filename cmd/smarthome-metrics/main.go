@@ -90,7 +90,6 @@ func readConfig() *config.Config {
 
 	// parse command-line flags
 	flag.Parse()
-	log.Infof("Fronius base url is %v", config.Fronius.BaseUrl)
 
 	return config
 }
