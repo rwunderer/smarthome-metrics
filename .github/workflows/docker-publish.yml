@@ -80,8 +80,8 @@ jobs:
           file: ./build/package/Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=Server to serve unified metrics from various intelligent devices,org.opencontainers.image.licenses=MIT
 
       # Run Trivy vulnerability scanner
