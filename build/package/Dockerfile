@@ -1,7 +1,7 @@
 #--------
 # builder
 #--------
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:alpine as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:alpine@sha256:feceecc0e1d73d085040a8844de11a2858ba4a0c58c16a672f1736daecc2a4ff as builder
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
@@ -25,7 +25,7 @@ COPY examples/config.yaml /conf
 #--------
 # container
 #--------
-FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/static:nonroot
+FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/static:nonroot@sha256:91ca4720011393f4d4cab3a01fa5814ee2714b7d40e6c74f2505f74168398ca9
 
 ENV CONFIG_FILE=/conf/config.yaml
 
