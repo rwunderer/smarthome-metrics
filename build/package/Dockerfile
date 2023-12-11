@@ -5,8 +5,9 @@ ARG BUILDPLATFORM
 FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:alpine@sha256:feceecc0e1d73d085040a8844de11a2858ba4a0c58c16a672f1736daecc2a4ff as builder
 
 ARG TARGETPLATFORM
-ARG TARGETOS
+ARG TARGETOS="linux"
 ARG TARGETARCH
+ARG TARGETVARIANT
 
 WORKDIR /app
 
@@ -16,7 +17,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -installsuffix cgo -ldflags '-extldflags "-static"' ./cmd/smarthome-metrics
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} GOARM=${TARGETVARIANT#"v"} go build -a -installsuffix cgo -ldflags '-extldflags "-static"' ./cmd/smarthome-metrics
 
 RUN mkdir /conf
 
