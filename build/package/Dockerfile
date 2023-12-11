@@ -34,7 +34,7 @@ COPY --from=builder /conf /conf
 
 WORKDIR /app
 
-USER 1002:1002
+# USER 1002:1002
 
 COPY --from=builder /app/smarthome-metrics /app/smarthome-metrics
 
