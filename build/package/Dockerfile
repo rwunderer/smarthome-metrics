@@ -28,6 +28,8 @@ COPY examples/config.yaml /conf
 #--------
 FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/static:nonroot@sha256:6a3500b086c2856fbc189f5d11351bdbcf7c4dc5673c2b6070aac9d607da90d7
 
+LABEL version=0.5.1
+
 ENV CONFIG_FILE=/conf/config.yaml
 
 COPY --from=builder /conf /conf
