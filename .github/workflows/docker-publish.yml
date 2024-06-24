@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
@@ -73,7 +73,7 @@ jobs:
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
         id: build-and-push
-        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
@@ -89,7 +89,7 @@ jobs:
       # and publish results to github
       - name: Run Trivy vulnerability scanner
         if: ${{ github.event_name != 'pull_request' }}
-        uses: aquasecurity/trivy-action@fd25fed6972e341ff0007ddb61f77e88103953c2 # 0.21.0
+        uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2 # 0.23.0
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
           format: 'sarif'
@@ -99,14 +99,14 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         if: ${{ github.event_name != 'pull_request' }}
-        uses: github/codeql-action/upload-sarif@2e230e8fe0ad3a14a340ad0815ddb96d599d2aff # v3
+        uses: github/codeql-action/upload-sarif@23acc5c183826b7a8a97bce3cecc52db901f8251 # v3
         with:
           sarif_file: 'trivy-results.sarif'
 
       # Generate Trivy SBOM
       - name: Run Trivy in GitHub SBOM mode and submit results to Dependency Snapshots
         if: ${{ github.event_name != 'pull_request' }}
-        uses: aquasecurity/trivy-action@fd25fed6972e341ff0007ddb61f77e88103953c2 # 0.21.0
+        uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2 # 0.23.0
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
           format: 'github'
