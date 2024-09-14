@@ -17,6 +17,7 @@ import (
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/fronius"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/graphite"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/metric"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/nrgkick"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/watertemp"
 )
 
@@ -102,6 +103,8 @@ func createControllers(config *config.Config) (controllers.ApplianceMap, control
 		switch name {
 		case "fronius":
 			appliances[name], _ = fronius.NewController(&config.Fronius)
+		case "nrgkick":
+			appliances[name], _ = nrgkick.NewController(&config.Nrgkick)
 		case "ecotouch":
 			appliances[name], _ = ecotouch.NewController(&config.Ecotouch)
 		default:
@@ -131,6 +134,8 @@ func initMetrics(config *config.Config) map[string]*metric.Metrics {
 		switch name {
 		case "fronius":
 			metrics[name] = metric.NewMetrics(config.Fronius.Prefix)
+		case "nrgkick":
+			metrics[name] = metric.NewMetrics(config.Nrgkick.Prefix)
 		case "ecotouch":
 			metrics[name] = metric.NewMetrics(config.Ecotouch.Prefix)
 		default:

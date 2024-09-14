@@ -9,14 +9,16 @@ import (
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/ecotouch"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/fronius"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/graphite"
+	"github.com/rwunderer/smarthome-metrics/internal/pkg/nrgkick"
 	"github.com/rwunderer/smarthome-metrics/internal/pkg/watertemp"
 )
 
 type Config struct {
 	ActiveAppliances  []string         `yaml:"appliances"`
 	ActiveControllers []string         `yaml:"controllers"`
-	Fronius           fronius.Config   `yaml:"fronius"`
 	Ecotouch          ecotouch.Config  `yaml:"ecotouch"`
+	Fronius           fronius.Config   `yaml:"fronius"`
+	Nrgkick           nrgkick.Config   `yaml:"nrgkick"`
 	Graphite          graphite.Config  `yaml:"graphite"`
 	WaterTemperature  watertemp.Config `yaml:"watertemp"`
 }
@@ -27,10 +29,11 @@ func (conf *Config) ReadFile(inFile string) error {
 		return fmt.Errorf("failed to read config file: %v", err)
 	}
 
-	conf.ActiveAppliances = []string{"fronius", "ecotouch"} // default value
-	conf.ActiveControllers = []string{"ecotouch"}           // default value
+	conf.ActiveAppliances = []string{"fronius", "nrgkick", "ecotouch"} // default value
+	conf.ActiveControllers = []string{"ecotouch"}                      // default value
 	conf.Ecotouch = ecotouch.GetDefaultConfig()
 	conf.Fronius = fronius.GetDefaultConfig()
+	conf.Nrgkick = nrgkick.GetDefaultConfig()
 	conf.Graphite = graphite.GetDefaultConfig()
 	conf.WaterTemperature = watertemp.GetDefaultConfig()
 

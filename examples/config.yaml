@@ -10,6 +10,10 @@ ecotouch:
   username: user
   password: pass
 
+nrgkick:
+  baseUrl: http://nrgkick.local
+  prefix: nrgkick
+
 graphite:
   hostname: graphite.local
   port: 2003
