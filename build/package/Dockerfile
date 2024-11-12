@@ -2,7 +2,7 @@
 # builder
 #--------
 ARG BUILDPLATFORM
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.23.3-alpine3.19@sha256:36cc30986d1f9bc46670526fe6553b078097e562e196344dea6a075e434f8341 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.23.3-alpine3.19@sha256:f84a44d1a66ce4f77aeae5b92cf53efb8ea78e6b3be41edc5538b6146cb600f8 as builder
 
 ARG TARGETPLATFORM
 ARG TARGETOS="linux"
