@@ -29,4 +29,5 @@ jobs:
       target: smarthome-metrics
       docker-file: ./build/package/Dockerfile
       docker-description: Server to serve unified metrics from various intelligent devices
+      platforms: "linux/amd64,linux/arm64,linux/arm/v7"
     secrets: inherit
