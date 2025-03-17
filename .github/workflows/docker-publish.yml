@@ -6,8 +6,6 @@ name: Docker Publish
 # documentation.
 
 on:
-  schedule:
-    - cron: '23 11 * * *'
   push:
     branches: [ "main", "github-renovate/*" ]
     # Publish semver tags as releases.
