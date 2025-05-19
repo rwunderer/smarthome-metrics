@@ -28,7 +28,7 @@ COPY examples/config.yaml /conf
 #--------
 FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/static:nonroot@sha256:188ddfb9e497f861177352057cb21913d840ecae6c843d39e00d44fa64daa51c AS smarthome-metrics
 
-LABEL version=0.6.4
+LABEL version=0.6.5
 
 ENV CONFIG_FILE=/conf/config.yaml
 
