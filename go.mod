@@ -2,12 +2,12 @@ module github.com/rwunderer/smarthome-metrics
 
 go 1.23.0
 
-toolchain go1.26.6
+toolchain go1.27.0
 
 require (
 	github.com/joho/godotenv v1.5.1
 	github.com/jtaczanowski/go-graphite-client v1.1.0
-	github.com/sirupsen/logrus v1.10.0
+	github.com/sirupsen/logrus v1.10.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
