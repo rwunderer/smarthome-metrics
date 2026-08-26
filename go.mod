@@ -7,7 +7,7 @@ toolchain go1.27.0
 require (
 	github.com/joho/godotenv v1.5.1
 	github.com/jtaczanowski/go-graphite-client v1.1.0
-	github.com/sirupsen/logrus v1.10.1
+	github.com/sirupsen/logrus v1.10.2
 	gopkg.in/yaml.v3 v3.0.1
 )
 
